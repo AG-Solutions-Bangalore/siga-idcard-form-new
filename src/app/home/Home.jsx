@@ -8,6 +8,7 @@ import { PlusCircle, MinusCircle, CheckCircle, Upload, ImageUp } from "lucide-re
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "@/config/BaseUrl";
 import axios from "axios";
+import PhotoUpload from "@/components/cropper/PhotoUpload";
 
 const Register = () => {
   const { toast } = useToast();
@@ -225,7 +226,18 @@ const Register = () => {
       setErrors(newErrors);
     }
   };
-
+  const dataURLtoBlob = (dataURL) => {
+    const arr = dataURL.split(",");
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+  
   const onSubmit = async (e) => {
     e.preventDefault();
     
@@ -242,14 +254,26 @@ const Register = () => {
       formData.append("id_firm_email", participants.id_firm_email);
       formData.append("register_counter", register_counter.toString());
       
-      representatives.forEach((rep, index) => {
-        formData.append(`idcardsub[${index}][idcardsub_rep_name]`, rep.idcardsub_rep_name);
+      // representatives.forEach((rep, index) => {
+      //   formData.append(`idcardsub[${index}][idcardsub_rep_name]`, rep.idcardsub_rep_name);
       
-          formData.append(`idcardsub[${index}][idcardsub_rep_mobile]`, rep.idcardsub_rep_mobile);
+      //     formData.append(`idcardsub[${index}][idcardsub_rep_mobile]`, rep.idcardsub_rep_mobile);
      
     
-          formData.append(`idcardsub[${index}][idcardsub_rep_image]`, rep.idcardsub_rep_image);
+      //     formData.append(`idcardsub[${index}][idcardsub_rep_image]`, rep.idcardsub_rep_image);
      
+      // });
+
+      representatives.forEach((rep, index) => {
+        formData.append(`idcardsub[${index}][idcardsub_rep_name]`, rep.idcardsub_rep_name);
+        formData.append(`idcardsub[${index}][idcardsub_rep_mobile]`, rep.idcardsub_rep_mobile);
+      
+        if (typeof rep.idcardsub_rep_image === "string" && rep.idcardsub_rep_image.startsWith("data:")) {
+          const blob = dataURLtoBlob(rep.idcardsub_rep_image);
+          formData.append(`idcardsub[${index}][idcardsub_rep_image]`, blob, `rep-${index}.jpg`);
+        } else {
+          formData.append(`idcardsub[${index}][idcardsub_rep_image]`, rep.idcardsub_rep_image);
+        }
       });
   
       // Debug: Log FormData contents
@@ -419,12 +443,20 @@ const Register = () => {
                     <ImageUp className="h-7 w-7 text-amber-600" />
                   )}
                 </div>
-                <Input
+                {/* <Input
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileChange(index, e)}
-                  className="hidden"
-                />
+               
+                /> */}
+                             <PhotoUpload
+  label="Siga Participant Image"
+ value={rep.idcardsub_rep_image}
+ onChange={(value) => handleRepresentativeChange(index, 'idcardsub_rep_image', value)}
+ hasError={!!errors.representatives[index]?.idcardsub_rep_image}
+    
+/>
+                
               </label>
               
               <Button
@@ -507,12 +539,21 @@ const Register = () => {
                         </td>
                  
                         <td className="p-3 border border-amber-200">
-                          <Input
+                          {/* <Input
                             type="file"
                             accept="image/*"
                             onChange={(e) => handleFileChange(index, e)}
                             className="w-full border border-amber-300 bg-white file:bg-amber-50 file:text-amber-800 file:border-0 file:mr-2 file:px-3 file:py-1 file:text-sm file:rounded focus:ring-amber-200 focus:border-amber-400"
-                          />
+                          /> */}
+                          <PhotoUpload
+ label="Siga Participant Image"
+  value={rep.idcardsub_rep_image}
+  onChange={(value) => handleRepresentativeChange(index, 'idcardsub_rep_image', value)}
+  
+  hasError={!!errors.representatives[index]?.idcardsub_rep_image}
+      
+/>
+
                           {rep.idcardsub_rep_image ? (
                             <span className="text-sm text-amber-600">File selected</span>
                           ) : errors.representatives[index]?.idcardsub_rep_image ? (
